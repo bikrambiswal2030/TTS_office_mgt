@@ -1,0 +1,35 @@
+/* Admin.css */
+
+.admin-cards {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.admin-card {
+  background: linear-gradient(to bottom right, #bbdefb, #e3f2fd);
+  border: 1px solid #2196f3;
+  border-radius: 15px;
+  width: 220px;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.admin-card:nth-child(2) {
+  background: linear-gradient(to bottom right, #e1bee7, #f3e5f5);
+  border: 1px solid #9c27b0;
+}
+
+.admin-card:hover {
+  transform: scale(1.05);
+  cursor: pointer;
+}
