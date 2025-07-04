@@ -9,6 +9,8 @@ function EmployeeTab() {
   const [showForm, setShowForm] = useState(false);
   const [createLogin, setCreateLogin] = useState(false);
   const [sameAddress, setSameAddress] = useState(false);
+  const [isUpdate, setIsUpdate] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
   const [formData, setFormData] = useState({
     profile: '',
@@ -22,6 +24,7 @@ function EmployeeTab() {
     department: '',
     dob: '',
     doj: '',
+    dol: '',
     presentAddress: '',
     permanentAddress: '',
     aadhar: '',
@@ -37,23 +40,23 @@ function EmployeeTab() {
   });
 
   const handleInputChange = (e) => {
-  const { name, value } = e.target;
-  setFormData(prev => ({
-    ...prev,
-    [name]: value
-  }));
-};
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      permanentAddress: name === "presentAddress" && sameAddress ? value : prev.permanentAddress
+    }));
+  };
 
-const handleSameAddressToggle = () => {
-  setSameAddress(prev => {
-    const updated = !prev;
-    if (updated) {
-      setFormData(f => ({ ...f, permanentAddress: f.presentAddress }));
-    }
-    return updated;
-  });
-};
-
+  const handleSameAddressToggle = () => {
+    setSameAddress(prev => {
+      const updated = !prev;
+      if (updated) {
+        setFormData(f => ({ ...f, permanentAddress: f.presentAddress }));
+      }
+      return updated;
+    });
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -66,17 +69,82 @@ const handleSameAddressToggle = () => {
     }
   };
 
-  const addEmployee = () => {
-    setEmployees(prev => [...prev, formData]);
+  const validateForm = () => {
+    if (createLogin && formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match!');
+      return false;
+    }
+    const dobDate = new Date(formData.dob);
+    const today = new Date();
+    const age = today.getFullYear() - dobDate.getFullYear();
+    const m = today.getMonth() - dobDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      alert('Employee must be at least 18 years old.');
+      return false;
+    }
+    return true;
+  };
+
+  const resetForm = () => {
     setFormData({
-      profile: '', firstName: '', middleName: '', lastName: '', id: '', email: '', phone: '', designation: '',
-      department: '', dob: '', doj: '', presentAddress: '', permanentAddress: '',
-      aadhar: '', pan: '', bankName: '', accNo: '', ifsc: '', branch: '',
-      gender: '', lastEducation: '', password: '', confirmPassword: ''
+      profile: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      id: '',
+      email: '',
+      phone: '',
+      designation: '',
+      department: '',
+      dob: '',
+      doj: '',
+      dol: '',
+      presentAddress: '',
+      permanentAddress: '',
+      aadhar: '',
+      pan: '',
+      bankName: '',
+      accNo: '',
+      ifsc: '',
+      branch: '',
+      gender: '',
+      lastEducation: '',
+      password: '',
+      confirmPassword: ''
     });
     setCreateLogin(false);
     setSameAddress(false);
     setShowForm(false);
+    setIsUpdate(false);
+    setEditIndex(null);
+  };
+
+  const handleSave = () => {
+    if (!validateForm()) return;
+    if (isUpdate) {
+      const updated = [...employees];
+      updated[editIndex] = formData;
+      setEmployees(updated);
+    } else {
+      setEmployees(prev => [...prev, formData]);
+    }
+    resetForm();
+  };
+
+  const updateEmployee = (index) => {
+    setFormData(employees[index]);
+    setIsUpdate(true);
+    setEditIndex(index);
+    setShowForm(true);
+  };
+
+  const retireEmployee = (index) => {
+    const updated = [...employees];
+    updated[index].dol = new Date().toISOString().split('T')[0];
+    setEmployees(updated);
   };
 
   const removeEmployee = (index) => {
@@ -95,6 +163,7 @@ const handleSameAddressToggle = () => {
       Department: emp.department,
       DOB: emp.dob,
       DOJ: emp.doj,
+      DOL: emp.dol,
       Gender: emp.gender,
       LastEducation: emp.lastEducation,
       PresentAddress: emp.presentAddress,
@@ -115,7 +184,7 @@ const handleSameAddressToggle = () => {
   const exportToPDF = () => {
     const doc = new jsPDF('l', 'pt');
     const headers = [
-      "ID", "Name", "Email", "Phone", "Designation", "Department", "DOB", "DOJ",
+      "ID", "Name", "Email", "Phone", "Designation", "Department", "DOB", "DOJ", "DOL",
       "Gender", "Last Education", "Present Address", "Permanent Address",
       "Aadhar", "PAN", "Bank Name", "Account No", "IFSC", "Branch"
     ];
@@ -128,6 +197,7 @@ const handleSameAddressToggle = () => {
       emp.department,
       emp.dob,
       emp.doj,
+      emp.dol,
       emp.gender,
       emp.lastEducation,
       emp.presentAddress,
@@ -139,7 +209,6 @@ const handleSameAddressToggle = () => {
       emp.ifsc,
       emp.branch
     ]);
-
     autoTable(doc, {
       head: [headers],
       body: rows,
@@ -147,7 +216,6 @@ const handleSameAddressToggle = () => {
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [123, 31, 162] }
     });
-
     doc.save('employee-list.pdf');
   };
 
@@ -176,6 +244,7 @@ const handleSameAddressToggle = () => {
                 <th>Department</th>
                 <th>DOB</th>
                 <th>DOJ</th>
+                <th>DOL</th>
                 <th>Gender</th>
                 <th>Last Education</th>
                 <th>Present Address</th>
@@ -201,6 +270,7 @@ const handleSameAddressToggle = () => {
                   <td>{emp.department}</td>
                   <td>{emp.dob}</td>
                   <td>{emp.doj}</td>
+                  <td>{emp.dol}</td>
                   <td>{emp.gender}</td>
                   <td>{emp.lastEducation}</td>
                   <td>{emp.presentAddress}</td>
@@ -212,7 +282,14 @@ const handleSameAddressToggle = () => {
                   <td>{emp.ifsc}</td>
                   <td>{emp.branch}</td>
                   <td>
-                    <button className="action-btn" style={{ background: '#e53935' }} onClick={() => removeEmployee(idx)}>Remove</button>
+                    {!emp.dol ? (
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button className="action-btn" onClick={() => updateEmployee(idx)}>Update</button>
+                        <button className="action-btn" style={{ background: '#f57c00' }} onClick={() => retireEmployee(idx)}>Retire</button>
+                      </div>
+                    ) : (
+                      <button className="action-btn" style={{ background: '#e53935' }} onClick={() => removeEmployee(idx)}>Remove</button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -223,8 +300,7 @@ const handleSameAddressToggle = () => {
 
       {showForm && (
         <div className="employee-form">
-          <h3>Add New Employee</h3>
-
+          <h3>{isUpdate ? 'Update Employee' : 'Add New Employee'}</h3>
           <div className="form-top-row">
             <div className="profile-container">
               <label htmlFor="profileUpload" className="profile-wrapper">
@@ -235,7 +311,7 @@ const handleSameAddressToggle = () => {
                 )}
               </label>
               <input type="file" id="profileUpload" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
-              <div className="upload-note">Accepts jpg, png, gif (max 1MB)</div>
+              <div className="upload-note">Accepts jpg, png, gif</div>
             </div>
 
             <div className="form-details-right">
@@ -267,91 +343,28 @@ const handleSameAddressToggle = () => {
           </div>
 
           <div className="flex-row">
-            <div className="form-group">
-              <label>Email</label>
-              <input name="email" type="email" value={formData.email} onChange={handleInputChange} />
-            </div>
-            <div className="form-group">
-              <label>Phone</label>
-              <input name="phone" value={formData.phone} onChange={handleInputChange} />
-            </div>
-            <div className="form-group">
-              <label>Designation</label>
-              <input name="designation" value={formData.designation} onChange={handleInputChange} />
-            </div>
-            <div className="form-group">
-              <label>Department</label>
-              <input name="department" value={formData.department} onChange={handleInputChange} />
-            </div>
-            <div className="form-group">
-              <label>DOB</label>
-              <input name="dob" type="date" value={formData.dob} onChange={handleInputChange} />
-            </div>
-            <div className="form-group">
-              <label>DOJ</label>
-              <input name="doj" type="date" value={formData.doj} onChange={handleInputChange} />
-            </div>
-            <div className="form-group">
-              <label>Gender</label>
-              <select name="gender" value={formData.gender} onChange={handleInputChange}>
-                <option value="">Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Last Education</label>
-              <select name="lastEducation" value={formData.lastEducation} onChange={handleInputChange}>
-                <option value="">Select</option>
-                <option value="BTech">BTech</option>
-                <option value="MTech">MTech</option>
-                <option value="MBA">MBA</option>
-                <option value="MCA">MCA</option>
-              </select>
-            </div>
+            <div className="form-group"><label>Email</label><input name="email" value={formData.email} onChange={handleInputChange} /></div>
+            <div className="form-group"><label>Phone</label><input name="phone" value={formData.phone} onChange={handleInputChange} /></div>
+            <div className="form-group"><label>Designation</label><input name="designation" value={formData.designation} onChange={handleInputChange} /></div>
+            <div className="form-group"><label>Department</label><input name="department" value={formData.department} onChange={handleInputChange} /></div>
+            <div className="form-group"><label>DOB</label><input name="dob" type="date" value={formData.dob} onChange={handleInputChange} /></div>
+            <div className="form-group"><label>DOJ</label><input name="doj" type="date" value={formData.doj} onChange={handleInputChange} /></div>
+            <div className="form-group"><label>Gender</label><select name="gender" value={formData.gender} onChange={handleInputChange}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+            <div className="form-group"><label>Last Education</label><select name="lastEducation" value={formData.lastEducation} onChange={handleInputChange}><option value="">Select</option><option>BTech</option><option>MTech</option><option>MBA</option><option>MCA</option></select></div>
           </div>
 
           <div className="flex-row">
-  <div className="form-group">
-    <label>Present Address</label>
-    <textarea
-      name="presentAddress"
-      value={formData.presentAddress}
-      onChange={handleInputChange}
-      rows={4}
-    />
-    <div className="checkbox-inline">
-      <input
-        type="checkbox"
-        checked={sameAddress}
-        onChange={handleSameAddressToggle}
-        id="sameAddress"
-      />
-      <label htmlFor="sameAddress">Same as Present Address</label>
-    </div>
-  </div>
-
-  <div className="form-group">
-    <label>Permanent Address</label>
-    <textarea
-      name="permanentAddress"
-      value={formData.permanentAddress}
-      onChange={handleInputChange}
-      rows={4}
-    />
-  </div>
-</div>
-
-
-          <div className="flex-row">
             <div className="form-group">
-              <label>Aadhar Number</label>
-              <input name="aadhar" value={formData.aadhar} onChange={handleInputChange} />
+              <label>Present Address</label>
+              <textarea name="presentAddress" rows={4} value={formData.presentAddress} onChange={handleInputChange} />
+              <div className="checkbox-inline">
+                <input type="checkbox" checked={sameAddress} onChange={handleSameAddressToggle} id="sameAddress" />
+                <label htmlFor="sameAddress">Same as Present Address</label>
+              </div>
             </div>
             <div className="form-group">
-              <label>PAN Number</label>
-              <input name="pan" value={formData.pan} onChange={handleInputChange} />
+              <label>Permanent Address</label>
+              <textarea name="permanentAddress" rows={4} value={formData.permanentAddress} onChange={handleInputChange} />
             </div>
           </div>
 
@@ -359,13 +372,13 @@ const handleSameAddressToggle = () => {
           <div className="flex-row">
             <input name="bankName" placeholder="Bank Name" value={formData.bankName} onChange={handleInputChange} />
             <input name="accNo" placeholder="Account Number" value={formData.accNo} onChange={handleInputChange} />
-            <input name="ifsc" placeholder="IFSC Code" value={formData.ifsc} onChange={handleInputChange} />
-            <input name="branch" placeholder="Branch Name" value={formData.branch} onChange={handleInputChange} />
+            <input name="ifsc" placeholder="IFSC" value={formData.ifsc} onChange={handleInputChange} />
+            <input name="branch" placeholder="Branch" value={formData.branch} onChange={handleInputChange} />
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-            <button className="action-btn" onClick={addEmployee}>Save</button>
-            <button className="action-btn" style={{ backgroundColor: '#e53935' }} onClick={() => setShowForm(false)}>Cancel</button>
+            <button className="action-btn" onClick={handleSave}>{isUpdate ? 'Update' : 'Save'}</button>
+            <button className="action-btn" style={{ backgroundColor: '#e53935' }} onClick={resetForm}>Cancel</button>
           </div>
         </div>
       )}
