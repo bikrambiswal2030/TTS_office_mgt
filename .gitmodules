@@ -1,0 +1,3 @@
+[submodule "TTS_office_mgt"]
+	path = TTS_office_mgt
+	url = https://github.com/ttsdevlopment07/TTS_office_mgt.git
