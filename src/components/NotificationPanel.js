@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 const mockMessages = [
   '📈 Sales increased by 5%',
@@ -19,6 +19,8 @@ function NotificationPanel() {
     '📢 Welcome to the notification panel'
   ]);
 
+  const boxRef = useRef(null);
+
   useEffect(() => {
     const interval = setInterval(() => {
       const msg = mockMessages[Math.floor(Math.random() * mockMessages.length)];
@@ -27,10 +29,16 @@ function NotificationPanel() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (boxRef.current) {
+      boxRef.current.scrollTop = boxRef.current.scrollHeight;
+    }
+  }, [notifications]);
+
   return (
     <div className="notification-panel">
       <h3>NOTIFICATIONS</h3>
-      <div className="notification-box">
+      <div className="notification-box" ref={boxRef}>
         {notifications.map((n, i) => (
           <div key={i} className="notification">{n}</div>
         ))}
